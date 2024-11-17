@@ -3,14 +3,15 @@ import os
 import argparse
 from datetime import datetime
 from dotenv import load_dotenv  # dotenvをインポート
-
+from pathlib import Path
+env_path = Path('.') / '.env'
 # .envファイルを読み込む
 load_dotenv()
 
 # 環境変数からトークンとデータベースIDを取得
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("DATABASE_ID")  # .envから取得
-NOTION_API_URL = os.getenv("NOTIONAPI_URL")
+NOTION_API_URL = os.getenv("NOTION_API_URL")
 
 # コマンドライン引数の設定
 parser = argparse.ArgumentParser(description='Notionに新しいエントリーを追加します。')
@@ -67,10 +68,15 @@ payload = {
         }
     }
 }
+if not NOTION_API_URL:
+    raise ValueError("NOTIONAPI_URL が設定されていません。'.env' ファイルを確認してください。")
 
 # APIリクエスト送信
 response = requests.post(NOTION_API_URL, headers=headers, json=payload)
 
-# 結果を表示
-print(response.status_code)
-print(response.json())
+# 結果を簡素に表示
+if response.status_code == 200:
+    print("complete!")
+else:
+    print(f"Error: {response.status_code}")
+
