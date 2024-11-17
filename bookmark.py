@@ -1,35 +1,39 @@
 import requests
 import os
-import argparse
+import sys
 from datetime import datetime
-from dotenv import load_dotenv  # dotenvをインポート
+from dotenv import load_dotenv
 from pathlib import Path
+
+# .envファイルの読み込み
 env_path = Path('.') / '.env'
-# .envファイルを読み込む
 load_dotenv()
 
-# 環境変数からトークンとデータベースIDを取得
+# 環境変数の取得
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
-DATABASE_ID = os.getenv("DATABASE_ID")  # .envから取得
+DATABASE_ID = os.getenv("DATABASE_ID")
 NOTION_API_URL = os.getenv("NOTION_API_URL")
 
-# コマンドライン引数の設定
-parser = argparse.ArgumentParser(description='Notionに新しいエントリーを追加します。')
-parser.add_argument('entry', type=str, help='タイトルとURLをカンマで区切ったエントリー')
+if not NOTION_TOKEN or not DATABASE_ID or not NOTION_API_URL:
+    raise ValueError(".envファイルの設定を確認してください。NOTION_TOKEN, DATABASE_ID, NOTION_API_URLが必要です。")
 
-# 引数を解析
-args = parser.parse_args()
+# 引数を再結合
+if len(sys.argv) < 2:
+    print("エラー: タイトルとURLをカンマで区切って入力してください。例: タイトル,URL")
+    sys.exit(1)
 
-# タイトルとURLをカンマで分割
-entry_parts = args.entry.split(',')
+# コマンドライン引数を結合
+entry = " ".join(sys.argv[1:])  # 全ての引数をスペースで結合
+entry_parts = entry.split(',', 1)  # 最初のカンマで分割
+
 if len(entry_parts) != 2:
-    print("エラー: タイトルとURLをカンマで区切って入力してください。")
-    exit(1)
+    print("エラー: タイトルとURLをカンマで区切って入力してください。例: タイトル,URL")
+    sys.exit(1)
 
-title = entry_parts[0]
-url = entry_parts[1]
+title = entry_parts[0].strip()
+url = entry_parts[1].strip()
 
-# APIリクエストヘッダー
+# APIリクエストのヘッダー
 headers = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
     "Content-Type": "application/json",
@@ -39,6 +43,7 @@ headers = {
 # 今日の日付を取得
 today_date = datetime.today().strftime('%Y-%m-%d')
 
+# リクエストペイロードの構築
 payload = {
     "parent": {
         "database_id": DATABASE_ID
@@ -56,27 +61,24 @@ payload = {
         "URL": {
             "url": url
         },
-        "status": {  # Statusプロパティを追加
+        "status": {
             "status": {
                 "name": "未着手"
             }
         },
-        "date": {  # Dateプロパティを追加
+        "date": {
             "date": {
-                "start": today_date  # 今日の日付
+                "start": today_date
             }
         }
     }
 }
-if not NOTION_API_URL:
-    raise ValueError("NOTIONAPI_URL が設定されていません。'.env' ファイルを確認してください。")
 
 # APIリクエスト送信
 response = requests.post(NOTION_API_URL, headers=headers, json=payload)
 
-# 結果を簡素に表示
+# 結果を表示
 if response.status_code == 200:
     print("complete!")
 else:
-    print(f"Error: {response.status_code}")
-
+    print(f"Error: {response.status_code}, {response.text}")
