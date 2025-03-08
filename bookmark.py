@@ -1,6 +1,7 @@
 import requests
 import os
 import sys
+import re
 from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
@@ -24,7 +25,7 @@ if len(sys.argv) < 2:
 
 # コマンドライン引数を結合
 entry = " ".join(sys.argv[1:])  # 全ての引数をスペースで結合
-entry_parts = entry.split(',', 1)  # 最初のカンマで分割
+entry_parts = re.split(r'[，,]', entry, maxsplit=1)  # 半角カンマ・全角カンマで分割
 
 if len(entry_parts) != 2:
     print("エラー: タイトルとURLをカンマで区切って入力してください。例: タイトル,URL")
@@ -37,7 +38,7 @@ url = entry_parts[1].strip()
 headers = {
     "Authorization": f"Bearer {NOTION_TOKEN}",
     "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28"  # 適切なバージョンを指定
+    "Notion-Version": "2022-06-28"  
 }
 
 # 今日の日付を取得
