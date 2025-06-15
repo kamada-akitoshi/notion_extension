@@ -8,7 +8,7 @@ COMMAND=$1
 shift  # 最初の引数 (コマンド) を削除して残りを渡す
 
 case "$COMMAND" in
-  bk)
+  bookmark)
     python3 "$SCRIPT_DIR/bookmark.py" "$@"
     ;;
   another)
